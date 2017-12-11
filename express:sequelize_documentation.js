@@ -259,3 +259,49 @@ Entity.findAll({where: {
 
   }
 }})
+
+//Eager Loading
+Model.findAll(
+  {where: { id: something.id},
+    include: [{ all: true }]
+  })
+
+  //or to find one foreign key
+Model.findAll({include: [something]})
+
+  //requires foreign keys
+  Model1.belongsTo(Model2, {foreignKeyConstraint: true});
+  Model2.hasMany(Model1);
+
+
+  var Model = db.define('Model', {
+    title: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: false}},
+    content: {type: Sequelize.TEXT, allowNull: false},
+    snippet: {type: Sequelize.VIRTUAL,
+      get () {
+        if (this.getDataValue('dataVal')) {
+          return this.getDataValue('dataVal').slice(0, 23) + '...';
+        } else {
+          return '';
+        }
+      }
+    },
+    version: {type: Sequelize.INTEGER, defaultValue: 0},
+    tags: {type: Sequelize.ARRAY(Sequelize.TEXT), defaultValue: [],
+      get () {
+        return this.getDataValue('tags').join(', ');
+      }
+    }
+  });
+
+  Model.prototype.truncate = function(length){
+    this.content = this.content.slice(0, length);
+  };
+
+  Model.findByTitle = function(title){
+    return Article.findOne({where: { title: title }});
+  };
+
+  Model.beforeUpdate((ModelInstance) => ModelInstance.version++ );
+
+  Model.belongsTo(OtherModel, {as: 'something'});
